@@ -83,6 +83,10 @@ final class Relper_Export_Plugin
             }
         }
 
+        while (ob_get_level() > 0) {
+            ob_end_clean();
+        }
+
         nocache_headers();
         header('Content-Type: application/xml; charset=UTF-8');
         echo $this->build_xml();
@@ -235,7 +239,6 @@ final class Relper_Export_Plugin
 
         $xml = new XMLWriter();
         $xml->openMemory();
-        $xml->startDocument('1.0', 'UTF-8');
         $xml->startElement('listings');
         $xml->writeAttribute('generated_at', gmdate('c'));
         $xml->writeAttribute('source', home_url('/'));
@@ -250,9 +253,7 @@ final class Relper_Export_Plugin
         }
 
         $xml->endElement();
-        $xml->endDocument();
-
-        return $xml->outputMemory();
+        return '<?xml version="1.0" encoding="UTF-8"?>' . "\n" . $xml->outputMemory();
     }
 
     private function write_listing(XMLWriter $xml, WP_Post $property): void
