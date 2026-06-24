@@ -240,9 +240,6 @@ final class Relper_Export_Plugin
         $xml = new XMLWriter();
         $xml->openMemory();
         $xml->startElement('listings');
-        $xml->writeAttribute('generated_at', gmdate('c'));
-        $xml->writeAttribute('source', home_url('/'));
-        $xml->writeAttribute('plugin_version', self::VERSION);
 
         $xml->startElement('agency');
         $this->write_text_element($xml, 'agency_name', $options['agency_name']);
@@ -337,7 +334,7 @@ final class Relper_Export_Plugin
                 'inspiry_property_bedrooms',
                 'property_bedrooms',
             ]),
-            'property_name' => get_the_title($property),
+            'property_name' => html_entity_decode(wp_strip_all_tags(get_the_title($property)), ENT_QUOTES | ENT_HTML5, 'UTF-8'),
             'property_street' => $this->first_meta($property->ID, [
                 'REAL_HOMES_property_address',
                 'inspiry_property_address',
@@ -468,6 +465,16 @@ final class Relper_Export_Plugin
         $hood = $names[1] ?? '';
         $hood_part = $names[2] ?? '';
         $csv_row = $this->find_location_row($city, $hood, $hood_part);
+
+        if ($csv_row === [] && $hood !== '') {
+            $csv_row = $this->find_location_row_by_single_name($hood_part !== '' ? $hood_part : $hood);
+            if ($csv_row !== []) {
+                $city = $csv_row['city_name'] ?? $city;
+                $hood = $csv_row['hood_name'] ?? $hood;
+                $hood_part = $hood_part !== '' ? ($csv_row['hood_part_name'] ?? $hood_part) : '';
+                unset($csv_row['_matched_column']);
+            }
+        }
 
         if (count($names) === 1 && $csv_row === []) {
             $csv_row = $this->find_location_row_by_single_name($names[0]);
